@@ -1,18 +1,7 @@
-/*const express = require('express');
-const app = express();
-const port = 3000;
+//Importation des modules nécessaires :
+const http = require('http');//http: Module natif de Node.js pour créer des serveurs HTTP.
 
-app.get('/', (req, res) => {
-    res.send('Hello');
-});
-
-app.listen(port, () => {
-    console.log(`Server running at https://localhost:${port}/`);
-})*/
-
-const http = require('http');
-
-const app = require('./app');
+const app = require('./app');//app: Application définie dans un autre fichier (./app), probablement une application Express.
 
 
 const normalizePort = val => {
@@ -60,3 +49,4 @@ const normalizePort = val => {
   
   server.listen(port);
   
+  //pAG5lBczbjbIpw4l : code pour la connection a la BDD
