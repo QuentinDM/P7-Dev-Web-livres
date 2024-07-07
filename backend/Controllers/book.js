@@ -1,21 +1,21 @@
-const book = require('../models/book');
+const Book = require('../models/book');
 
 //GET tout les livres 
-exports.allBooks = (req, res) => {
-    try {
-        const books = book.find();
-        res.json(books);// Les livres sont envoyés au client sous forme de réponse JSON. Cela permet au front-end de recevoir les données dans un format facilement exploitable.
-    } catch (error) {
-        res.status(500).json({message: error.message})
-    }
-  };
+exports.allBooks = async (req, res) => {
+  try {
+    const books = await Book.find();// Vous devez attendre que la promesse soit résolue avant de renvoyer les livres au client. En utilisant async/await
+    res.json(books); // Les livres sont envoyés au client sous forme de réponse JSON
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
   
 
 //GET un seul livre
-exports.getOneBook = (req, res) => {
+exports.getOneBook = async (req, res) => {
     try {
-        book.findOne({
-            _userId: req.params.id
+        await Book.findOne({
+            id: req.id
         }).then((book) => {res.status(200).json(book) })
     } catch (error) {
         res.status(404).json({message: error.message})
@@ -26,7 +26,7 @@ exports.getOneBook = (req, res) => {
 //GET meilleure note moyenne des livres 
 exports.averageRateBook = (req, res) => {
     try {
-        const topBooks =  book.find()
+        const topBooks =  Book.find()
         .sort({ averageRating: -1 }) // Trie les livres par averageRating décroissant
         .limit(3); // Limite à 3 résultats
         res.json(topBooks);
@@ -35,29 +35,58 @@ exports.averageRateBook = (req, res) => {
       }
 }
 
-//POST un nouveau livre
-exports.createBook = (req, res) => {
-    const newBook = new book({
-      _userId: req.body.userId,
-      title: req.body.title,
-      author: req.body.author,
-      imageUrl: req.body.imageUrl,
-      year: req.body.year,
-      genre: req.body.genre,
-      rating: [],
-      averageRating: 0
+// POST un nouveau livre
+exports.addBook = async (req, res) => {
+  try {
+    // Analyser les données du livre
+    const bookData = JSON.parse(req.body.book);
+    delete bookData._id;
+    delete bookData._userId;;
+    // Créer un nouvel objet Book
+    const newBook = new Book({
+      ...bookData,
+      userId: req.auth.userId,
+      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,  
     });
-    newBook.save().then(
-      () => {
-        res.status(201).json({
-          message: 'Post saved successfully!'
-        });
-      }
-    ).catch(
-      (error) => {
-        res.status(400).json({
-          error: error
-        });
-      }
-    );
-  };
+   
+    // Sauvegarder le livre dans la base de données
+    await newBook.save();
+    // Répondre avec un message de succès
+    res.status(201).json({ message: 'Book saved successfully!', book: savedBook });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.modifyBook = (req, res) => {
+  const bookObject = req.file ? {
+      ...JSON.parse(req.body.book),
+      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+  } : { ...req.body };
+
+  delete bookObject._userId;//éviter de changer son propriétaire et nous avons vérifié que le requérant est bien le propriétaire de l’objet.
+  Book.findOne({_id: req.params.id})
+      .then((book) => {
+          if (book.userId != req.auth.userId) {
+              res.status(401).json({ message : 'Not authorized'});
+          } else {
+              Book.updateOne({ _id: req.params.id}, { ...bookObject, _id: req.params.id})
+              .then(() => res.status(200).json({message : 'Objet modifié!'}))
+              .catch(error => res.status(401).json({ error }));
+          }
+      })
+      .catch((error) => {
+          res.status(400).json({ error });
+      });
+};
+
+
+exports.deleteBook = async (req, res) => {
+  try {
+    await Book.deleteOne({
+      id: req.id
+    }).then((book) => {res.status(200).json(book) })
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}

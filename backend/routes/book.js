@@ -1,30 +1,22 @@
 const express = require('express');
 const auth = require('../middlewares/auth');
 const bookControl = require('../Controllers/book');
-
+const multer = require('../middlewares/multer-config')
 const router = express.Router();
 
 //Router GET
-router.get('/api/books', auth, bookControl.allBooks);//Renvoie un tableau de tous les livres de la base de
+router.get('/',  bookControl.allBooks);//Renvoie un tableau de tous les livres de la base de
 //données. 
-router.get('/api/books/bestrating',  auth, bookControl.averageRateBook);//Renvoie un tableau des 3 livres de la base de
+router.get('/bestrating', bookControl.averageRateBook);//Renvoie un tableau des 3 livres de la base de
 //données ayant la meilleure note moyenne
-router.get('/api/books/:id',  auth, bookControl.getOneBook);//Renvoie le livre avec l’_id fourni.
+router.get('/:id', bookControl.getOneBook);//Renvoie le livre avec l’_id fourni.
 
 
 //Router POST
-router.post('/api/books', auth, bookControl.createBook);
-//Capture et enregistre l'image, analyse le livre
-//transformé en chaîne de caractères, et l'enregistre
-//dans la base de données en définissant
-//correctement son ImageUrl.
-//Initialise la note moyenne du livre à 0 et le rating
-//avec un tableau vide. Remarquez que le corps de la
-//demande initiale est vide ; lorsque Multer est ajouté,
-//il renvoie une chaîne pour le corps de la demande
-//en fonction des données soumises avec le fichier.
+router.post('/', auth, multer, bookControl.addBook);
+//ajouter un livre a la BDD
 
-router.post('/api/books/:id/rating', auth, bookControl.createThing);
+///////////////////////////router.post('/:id/rating', auth, bookControl.createABook);
 //Définit la note pour le user ID fourni.
 //La note doit être comprise entre 0 et 5.
 //L'ID de l'utilisateur et la note doivent être ajoutés au
@@ -35,7 +27,7 @@ router.post('/api/books/:id/rating', auth, bookControl.createThing);
 //jour, et le livre renvoyé en réponse de la requête.
 
 //Router PUT
-router.put('/api/books/:id', auth, bookControl.modifyThing);
+router.put('/:id', auth, multer, bookControl.modifyThing);
 //Met à jour le livre avec l'_id fourni. Si une image est
 //téléchargée, elle est capturée, et l’ImageUrl du livre
 //est mise à jour. Si aucun fichier n'est fourni, les
@@ -50,7 +42,7 @@ router.put('/api/books/:id', auth, bookControl.modifyThing);
 
 
 //Router DELETE
-router.delete('/api/books/:id', auth, bookControl.deleteThing);
+router.delete('/:id', auth, bookControl.deleteBook);
 //Supprime le livre avec l'_id fourni ainsi que l’image
 //associée.
 

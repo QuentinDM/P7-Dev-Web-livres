@@ -10,10 +10,10 @@ const bookSchema = mongoose.Schema({
     ratings : [
     {
     userId : {type: String, required: true}, // identifiant MongoDB unique de l'utilisateur qui a noté le livre
-    grade : {type: Number, required: true}, // note donnée à un livre
+    grade : {type: Number, required: true, min: 1, max: 5}, // note donnée à un livre
     }
     ], // notes données à un livre
-    averageRating : {type: Number, required: true} // note moyenne du livre
+    averageRating : {type: Number, default: 0} // note moyenne du livre
     }
     );
 
