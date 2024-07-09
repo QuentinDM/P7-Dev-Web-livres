@@ -96,7 +96,7 @@ export async function rateBook(id, userId, rating) {
     userId,
     rating: parseInt(rating, 10),
   };
-
+  console.log(data);
   try {
     const response = await axios.post(`${API_ROUTES.BOOKS}/${id}/rating`, data, {
       headers: {
@@ -130,7 +130,6 @@ export async function addBook(data) {
   const bodyFormData = new FormData();
   bodyFormData.append('book', JSON.stringify(book));
   bodyFormData.append('image', data.file[0]);
-  console.log(bodyFormData);
 
   try {
     return await axios({

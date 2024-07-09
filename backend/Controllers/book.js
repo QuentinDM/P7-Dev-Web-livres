@@ -12,10 +12,10 @@ exports.allBooks = async (req, res) => {
   
 
 //GET un seul livre
-exports.getOneBook = async (req, res) => {
+exports.getOneBook = (req, res) => {
     try {
-        await Book.findOne({
-            id: req.id
+        Book.findOne({
+            _id: req.params.id
         }).then((book) => {res.status(200).json(book) })
     } catch (error) {
         res.status(404).json({message: error.message})
@@ -24,9 +24,9 @@ exports.getOneBook = async (req, res) => {
 
 
 //GET meilleure note moyenne des livres 
-exports.averageRateBook = (req, res) => {
+exports.averageRateBook = async (req, res) => {
     try {
-        const topBooks =  Book.find()
+        const topBooks = await Book.find()
         .sort({ averageRating: -1 }) // Trie les livres par averageRating décroissant
         .limit(3); // Limite à 3 résultats
         res.json(topBooks);
@@ -41,16 +41,18 @@ exports.addBook = async (req, res) => {
     // Analyser les données du livre
     const bookData = JSON.parse(req.body.book);
     delete bookData._id;
-    delete bookData._userId;;
+    delete bookData._userId;
     // Créer un nouvel objet Book
     const newBook = new Book({
       ...bookData,
       userId: req.auth.userId,
-      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,  
+      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
+      ratings: [],
+      averageRating: 0
     });
    
     // Sauvegarder le livre dans la base de données
-    await newBook.save();
+    const savedBook = await newBook.save();
     // Répondre avec un message de succès
     res.status(201).json({ message: 'Book saved successfully!', book: savedBook });
   } catch (error) {
@@ -80,6 +82,35 @@ exports.modifyBook = (req, res) => {
       });
 };
 
+exports.rateBook =  async (req, res) => {
+  const { userId, rating } = req.body;
+
+  if (rating < 0 || rating > 5) {
+      return res.status(400).json({ error: 'La note doit être comprise entre 0 et 5.' });
+  }
+
+  try {
+      const book = await Book.findById(req.params.id);
+
+      if (!book) {
+          return res.status(404).json({ error: 'Livre non trouvé.' });
+      }
+
+      const existingRating = book.ratings.find(r => r.userId === userId);
+
+      if (existingRating) {
+          return res.status(400).json({ error: 'Vous avez déjà noté ce livre.' });
+      }
+
+      book.ratings.push({ userId, rating });
+      book.averageRating = book.ratings.reduce((sum, r) => sum + r.rating, 0) / book.ratings.length;
+
+      await book.save();
+      res.json(book);
+  } catch (error) {
+      res.status(500).json({ error: 'Erreur serveur.' });
+  }
+};
 
 exports.deleteBook = async (req, res) => {
   try {

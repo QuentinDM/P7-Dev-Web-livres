@@ -9,6 +9,7 @@ router.get('/',  bookControl.allBooks);//Renvoie un tableau de tous les livres d
 //données. 
 router.get('/bestrating', bookControl.averageRateBook);//Renvoie un tableau des 3 livres de la base de
 //données ayant la meilleure note moyenne
+
 router.get('/:id', bookControl.getOneBook);//Renvoie le livre avec l’_id fourni.
 
 
@@ -16,29 +17,12 @@ router.get('/:id', bookControl.getOneBook);//Renvoie le livre avec l’_id fourn
 router.post('/', auth, multer, bookControl.addBook);
 //ajouter un livre a la BDD
 
-///////////////////////////router.post('/:id/rating', auth, bookControl.createABook);
-//Définit la note pour le user ID fourni.
-//La note doit être comprise entre 0 et 5.
-//L'ID de l'utilisateur et la note doivent être ajoutés au
-//tableau "rating" afin de ne pas laisser un utilisateur
-//noter deux fois le même livre.
-//Il n’est pas possible de modifier une note.
-//La note moyenne "averageRating" doit être tenue à
-//jour, et le livre renvoyé en réponse de la requête.
+router.post('/:id/rating', auth, bookControl.rateBook);
+
 
 //Router PUT
-router.put('/:id', auth, multer, bookControl.modifyThing);
-//Met à jour le livre avec l'_id fourni. Si une image est
-//téléchargée, elle est capturée, et l’ImageUrl du livre
-//est mise à jour. Si aucun fichier n'est fourni, les
-//informations sur le livre se trouvent directement
-//dans le corps de la requête (req.body.title,
-//req.body.author, etc.). Si un fichier est fourni, le livre
-//transformé en chaîne de caractères se trouve dans
-//req.body.book. Notez que le corps de la demande
-//initiale est vide ; lorsque Multer est ajouté, il renvoie
-//une chaîne du corps de la demande basée sur les
-//données soumises avec le fichier.
+router.put('/:id', auth, multer, bookControl.modifyBook);
+//Met à jour le livre avec l'_id fourni. 
 
 
 //Router DELETE
