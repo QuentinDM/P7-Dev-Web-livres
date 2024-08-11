@@ -2,6 +2,7 @@ const express = require('express');
 const auth = require('../middlewares/auth');
 const bookControl = require('../Controllers/book');
 const multer = require('../middlewares/multer-config')
+const resizeImage = require("../middlewares/sharp-config");
 const router = express.Router();
 
 //Router GET
@@ -14,14 +15,14 @@ router.get('/:id', bookControl.getOneBook);//Renvoie le livre avec l’_id fourn
 
 
 //Router POST
-router.post('/', auth, multer, bookControl.addBook);
+router.post('/', auth, multer, resizeImage ,bookControl.addBook);
 //ajouter un livre a la BDD
 
 router.post('/:id/rating', auth, bookControl.rateBook);
 
 
 //Router PUT
-router.put('/:id', auth, multer, bookControl.modifyBook);
+router.put('/:id', auth, multer, resizeImage, bookControl.modifyBook);
 //Met à jour le livre avec l'_id fourni. 
 
 

@@ -7,7 +7,12 @@ const bookSchema = mongoose.Schema({
     imageUrl : {type: String, required: true}, // illustration/couverture du livre
     year: {type: Number, required: true},// année de publication du livre
     genre: {type: String, required: true}, // genre du livre
-    ratings: { type: Array, default: [] }, // notes données à un livre, initialisées à un tableau vide
+    ratings: [ // notes données à un livre
+        {
+            userId: { type: String, require: true },
+            grade: { type: Number, require: true, min: 0, max: 5 },
+        },
+    ],
     averageRating : {type: Number, default: 0} // note moyenne du livre
     }
     );

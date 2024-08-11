@@ -1,4 +1,5 @@
 const Book = require('../models/book');
+const fs = require('fs');//interagir avec le système de fichiers du serveur.
 
 //GET tout les livres 
 exports.allBooks = async (req, res) => {
@@ -10,7 +11,6 @@ exports.allBooks = async (req, res) => {
   }
 };
   
-
 //GET un seul livre
 exports.getOneBook = (req, res) => {
     try {
@@ -21,7 +21,6 @@ exports.getOneBook = (req, res) => {
         res.status(404).json({message: error.message})
     }
 }
-
 
 //GET meilleure note moyenne des livres 
 exports.averageRateBook = async (req, res) => {
@@ -36,29 +35,30 @@ exports.averageRateBook = async (req, res) => {
 }
 
 // POST un nouveau livre
-exports.addBook = async (req, res) => {
-  try {
-    // Analyser les données du livre
-    const bookData = JSON.parse(req.body.book);
-    delete bookData._id;
-    delete bookData._userId;
-    // Créer un nouvel objet Book
-    const newBook = new Book({
-      ...bookData,
-      userId: req.auth.userId,
-      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
-      ratings: [],
-      averageRating: 0
-    });
-   
-    // Sauvegarder le livre dans la base de données
-    const savedBook = await newBook.save();
-    // Répondre avec un message de succès
-    res.status(201).json({ message: 'Book saved successfully!', book: savedBook });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
+exports.addBook = (req, res) => {
+  // Analyser les données du livre
+  const bookData = JSON.parse(req.body.book);
+  delete bookData._id;
+  delete bookData._userId;
+  
+  let rating = [];
+
+  if (bookData.ratings[0].grade !== 0) {
+      rating = bookData.ratings;
+  };
+  
+  // Créer un nouvel objet Book
+  const newBook = new Book({
+    ...bookData,
+    userId: req.auth.userId,
+    imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
+    ratings: rating
+  });
+  // Sauvegarder le livre dans la base de données
+  newBook.save()
+    .then(() => res.status(201).json({ message: 'Objet enregistré !'})) // enregistrement du livre dans la base de données
+    .catch(error => res.status(400).json({ error }));
+}; 
 
 exports.modifyBook = (req, res) => {
   const bookObject = req.file ? {
@@ -82,42 +82,53 @@ exports.modifyBook = (req, res) => {
       });
 };
 
-exports.rateBook =  async (req, res) => {
-  const { userId, rating } = req.body;
+exports.rateBook = async (req, res) => {
+  await Book.findOne({ _id: req.params.id })  //recherche via le paramètre id
+  .then(book => {
+    const currentUserId = req.auth.userId; 
+    const existingRating = book.ratings.find(rating => rating.userId === currentUserId);
+    if (existingRating) {
+      return res.status(400).json({ error: 'Note déjà ajoutée auparavant.' });
+    }
+    //envoie de la note du livre 
+    book.ratings.push({
+      userId: req.auth.userId,
+      grade: req.body.rating
+    });
+    //calcul des moyennes de rating 
+    const totalRatings = book.ratings.reduce((total, rating) => total + rating.grade, 0); //méthode réduce pour parcourir
+    const averageRating = totalRatings / book.ratings.length;  //obtention de la moyenne, sans oublier a la decimale 
+    book.averageRating = averageRating; //moyenne calculé et ajouté à averageRating
 
-  if (rating < 0 || rating > 5) {
-      return res.status(400).json({ error: 'La note doit être comprise entre 0 et 5.' });
-  }
-
-  try {
-      const book = await Book.findById(req.params.id);
-
-      if (!book) {
-          return res.status(404).json({ error: 'Livre non trouvé.' });
-      }
-
-      const existingRating = book.ratings.find(r => r.userId === userId);
-
-      if (existingRating) {
-          return res.status(400).json({ error: 'Vous avez déjà noté ce livre.' });
-      }
-
-      book.ratings.push({ userId, rating });
-      book.averageRating = book.ratings.reduce((sum, r) => sum + r.rating, 0) / book.ratings.length;
-
-      await book.save();
-      res.json(book);
-  } catch (error) {
-      res.status(500).json({ error: 'Erreur serveur.' });
-  }
+    book.save()
+      .then(() => {
+        res.status(200).json(book);
+      })
+      .catch(error => {
+        res.status(400).json({ error: error.message });
+      });
+    })
+    .catch(error => {
+      res.status(400).json({ error: error.message });
+    });
 };
 
-exports.deleteBook = async (req, res) => {
-  try {
-    await Book.deleteOne({
-      id: req.id
-    }).then((book) => {res.status(200).json(book) })
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-}
+
+exports.deleteBook = (req, res) => {
+  Book.findOne({ _id: req.params.id})
+      .then(book => {
+          if (book.userId != req.auth.userId) {
+              res.status(401).json({message: 'Not authorized'});
+          } else {
+              const filename = book.imageUrl.split('/images/')[1];
+              fs.unlink(`images/${filename}`, () => {//La méthode unlink() du package  fs  vous permet de supprimer un fichier du système de fichiers.
+                  Book.deleteOne({_id: req.params.id})
+                      .then(() => { res.status(200).json({message: 'Objet supprimé !'})})
+                      .catch(error => res.status(401).json({ error }));
+              });
+          }
+      })
+      .catch( error => {
+          res.status(500).json({ error });
+      });
+};

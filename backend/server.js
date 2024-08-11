@@ -49,4 +49,3 @@ const normalizePort = val => {
   
   server.listen(port);
   
-  //pAG5lBczbjbIpw4l : code pour la connection a la BDD
