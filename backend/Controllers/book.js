@@ -97,7 +97,7 @@ exports.rateBook = async (req, res) => {
     });
     //calcul des moyennes de rating 
     const totalRatings = book.ratings.reduce((total, rating) => total + rating.grade, 0); //méthode réduce pour parcourir
-    const averageRating = totalRatings / book.ratings.length;  //obtention de la moyenne, sans oublier a la decimale 
+    const averageRating = totalRatings / book.ratings.length;  //obtention de la moyenne 
     book.averageRating = averageRating; //moyenne calculé et ajouté à averageRating
 
     book.save()

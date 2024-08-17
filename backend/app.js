@@ -23,7 +23,6 @@ app.use((req, res, next) => {
 // puis on export cette Application 
 app.use('/api/books', bookRoutes);
 app.use('/api/auth', userRoutes);
-app.use('/images', express.static(path.join(__dirname, 'images')));//voir le cour https://openclassrooms.com/fr/courses/6390246-passez-au-full-stack-avec-node-js-express-et-mongodb/6466669-modifiez-les-routes-pour-prendre-en-compte-les-fichiers
-//app.use(/api/books)//route attendu par le frontend, qui sera la racine de notre route
+app.use('/images', express.static(path.join(__dirname, 'images')));
 module.exports = app;//pour que l'on puisse l'exporter dans les autres fichiers
 
