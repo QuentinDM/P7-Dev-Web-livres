@@ -18,7 +18,7 @@ const resizeImage = async (req, res, next) => {
     // Utilisation de sharp pour redimensionner et convertir l'image
     await sharp(req.file.buffer)//charge l'image depuis la mémoire
       .resize(250, 400) 
-      .webp({ quality: 80 }) 
+      .webp({ quality: 80 }) //compression de l'image
       .toFile(outputPath); // Enregistrement de l'image traitée sur le disque
 
     // Mise à jour des informations de fichier dans l'objet de requête

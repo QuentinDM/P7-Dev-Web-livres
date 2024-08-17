@@ -4,7 +4,7 @@ const bookControl = require('../Controllers/book');
 const multer = require('../middlewares/multer-config')
 const resizeImage = require("../middlewares/sharp-config");
 const router = express.Router();
-
+//qui gere la gestion des livres dans une application Express, utilisant divers middlewares
 //Router GET
 router.get('/',  bookControl.allBooks);//Renvoie un tableau de tous les livres de la base de
 //données. 

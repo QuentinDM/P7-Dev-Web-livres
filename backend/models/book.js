@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose'); //simplifie les interactions entre une application Node.js et une base de données MongoDB. Une solution plus structurée pour gérer les documents MongoDB avec des modèles et des schémas.
 
 const bookSchema = mongoose.Schema({
     userId : {type: String, required: true}, // identifiant MongoDB unique de l'utilisateur qui a créé le livre
